@@ -1,0 +1,168 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  admin-db:
+    image: mysql:8
+    container_name: admin-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: admin_todos
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: django
+      MYSQL_PASSWORD: django
+    volumes:
+      - admin_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  user-db:
+    image: mysql:8
+    container_name: user-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: user_todos
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: django
+      MYSQL_PASSWORD: django
+    volumes:
+      - user_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  admin-write:
+    build: ./admin-write
+    container_name: admin-write
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./admin-write:/app:z
+    ports:
+      - "8000:8000"
+    depends_on:
+      admin-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: admin-db
+      DB_NAME: admin_todos
+      DB_USER: django
+      DB_PASSWORD: django
+      DB_PORT: 3306
+      RABBITMQ_HOST: rabbitmq
+
+  user-status:
+    build: ./user-status
+    container_name: user-status
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8001"
+    volumes:
+      - ./user-status:/app:z
+    ports:
+      - "8001:8001"
+    depends_on:
+      user-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: user-db
+      DB_NAME: user_todos
+      DB_USER: django
+      DB_PASSWORD: django
+      DB_PORT: 3306
+      RABBITMQ_HOST: rabbitmq
+
+  # admin-consumer:
+  #   build: ./admin-write
+  #   container_name: admin-consumer
+  #   command: python todos/consumers/admin_consumer.py
+  #   volumes:
+  #     - ./admin-write:/app:z
+  #   depends_on:
+  #     admin-db:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_HOST: admin-db
+  #     DB_NAME: admin_todos
+  #     DB_USER: django
+  #     DB_PASSWORD: django
+  #     DB_PORT: 3306
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  admin-consumer:
+    build: ./admin-write
+    command: python manage.py shell -c "from todos.consumers import run_admin_consumer; run_admin_consumer()"
+    depends_on:
+      - rabbitmq
+      - admin-db
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+
+  # user-consumer:
+  #   build: ./user-status
+  #   container_name: user-consumer
+  #   command: python todos/consumers/user_consumer.py
+  #   volumes:
+  #     - ./user-status:/app:z
+  #   depends_on:
+  #     user-db:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_HOST: user-db
+  #     DB_NAME: user_todos
+  #     DB_USER: django
+  #     DB_PASSWORD: django
+  #     DB_PORT: 3306
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+
+  user-consumer:
+    build: ./user-status  
+    command: python manage.py shell -c "from todos.consumers import run_user_consumer; run_user_consumer()"
+    depends_on:
+      - rabbitmq
+      - user-db
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+  
+  admin-outbox-worker:
+    build: ./admin-write
+    container_name: admin-outbox-worker
+    command: sh -c "while true; do python manage.py process_outbox; sleep 10; done"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      admin-db:
+        condition: service_healthy
+    environment:
+      DB_NAME: admintodos
+      DB_USER: django
+      DB_PASSWORD: django
+      DB_HOST: admin-db
+      DB_PORT: 3306
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+volumes:
+  admin_db_data:
+  user_db_data:
