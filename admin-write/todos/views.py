@@ -131,7 +131,8 @@ def todo_list_create(request):
                 exchange="todo_exchange",
                 routing_key="todo.created",
                 payload=event_payload,
-                status="pending"
+                status="pending",
+                max_retries=5  
             )
 
         try:
@@ -231,7 +232,8 @@ def todo_detail(request, pk):
             exchange="todo_exchange",
             routing_key="todo.updated",
             payload=event_payload,
-            status="pending"
+            status="pending",
+            max_retries=5  
         )
 
         try:
@@ -273,7 +275,8 @@ def todo_detail(request, pk):
             exchange="todo_exchange",
             routing_key="todo.deleted",
             payload=event_payload,
-            status="pending"
+            status="pending",
+            max_retries=5
         )
 
         todo.delete()

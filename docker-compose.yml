@@ -108,7 +108,7 @@ services:
   #     RABBITMQ_PORT: 5672
   admin-consumer:
     build: ./admin-write
-    command: python manage.py shell -c "from todos.consumers import run_admin_consumer; run_admin_consumer()"
+    command: sh -c "sleep 40 && python manage.py shell -c 'from todos.consumers import run_admin_consumer; run_admin_consumer()'"
     depends_on:
       - rabbitmq
       - admin-db
@@ -137,32 +137,31 @@ services:
   #     RABBITMQ_PORT: 5672
 
   user-consumer:
-    build: ./user-status  
-    command: python manage.py shell -c "from todos.consumers import run_user_consumer; run_user_consumer()"
+    image: todo-microservices-circuitbreaker-user-consumer
+    command: sh -c "sleep 60 && python manage.py shell -c 'from todos.consumers import run_user_consumer; run_user_consumer()'"
     depends_on:
-      - rabbitmq
       - user-db
-    environment:
-      - PYTHONPATH=/app
+      - rabbitmq
     restart: unless-stopped
+    profiles: ["consumers"]
   
-  admin-outbox-worker:
-    build: ./admin-write
-    container_name: admin-outbox-worker
-    command: sh -c "while true; do python manage.py process_outbox; sleep 10; done"
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-      admin-db:
-        condition: service_healthy
-    environment:
-      DB_NAME: admintodos
-      DB_USER: django
-      DB_PASSWORD: django
-      DB_HOST: admin-db
-      DB_PORT: 3306
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
+  # admin-outbox-worker:
+  #   build: ./admin-write
+  #   container_name: admin-outbox-worker
+  #   command: sh -c "while true; do python manage.py process_outbox; sleep 10; done"
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     admin-db:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_NAME: admintodos
+  #     DB_USER: django
+  #     DB_PASSWORD: django
+  #     DB_HOST: admin-db
+  #     DB_PORT: 3306
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
 volumes:
   admin_db_data:
   user_db_data:

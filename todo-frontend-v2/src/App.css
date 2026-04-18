@@ -1,0 +1,169 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f4f7fb;
+  color: #222;
+}
+
+.navbar {
+  background: #1e3a8a;
+  color: white;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav-link.active {
+  text-decoration: underline;
+}
+
+.main-container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.page-card {
+  background: white;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.page-card h1 {
+  margin-bottom: 12px;
+  color: #1e3a8a;
+}
+
+.page-card p {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.todo-form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.todo-form input,
+.todo-form textarea,
+.todo-form select {
+  padding: 12px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.todo-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.todo-form button,
+.delete-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.delete-btn {
+  background: #dc2626;
+}
+
+.section-title {
+  margin: 24px 0 16px;
+  color: #1e3a8a;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.todo-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.todo-table th,
+.todo-table td {
+  border: 1px solid #dbe2ea;
+  padding: 12px;
+  text-align: left;
+}
+
+.todo-table th {
+  background: #eff6ff;
+}
+
+.todo-table select {
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.message-box {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.message-box.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.message-box.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.message-box.info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+  }
+
+  .page-card {
+    padding: 18px;
+  }
+}
